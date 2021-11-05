@@ -1,0 +1,3 @@
+[submodule "vendor/TGJGE"]
+	path = vendor/TGJGE
+	url = https://github.com/tevoran/TGJGE.git
