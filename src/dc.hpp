@@ -44,7 +44,7 @@ namespace dc
 
 		bool intersect(
 			tri& tri,
-			glm::vec3& pixel_diretion,
+			glm::vec3& pixel_direction,
 			glm::vec3& intersection_point,
 			color& color,
 			float& depth);

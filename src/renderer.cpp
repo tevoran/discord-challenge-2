@@ -2,12 +2,24 @@
 
 void dc::renderer::render()
 {
+	//prepare the triangles
+	int num_tris=triangles.size();
+	for(int i=0; i<num_tris; i++)
+	{
+		triangles.data()[i].normal=glm::cross(
+			glm::vec3(triangles.data()[i].v[1]-triangles.data()[i].v[0]),
+			glm::vec3(triangles.data()[i].v[2]-triangles.data()[i].v[0]));
+		triangles.data()[i].normal=glm::normalize(triangles.data()[i].normal);
+	}
+
 	//naive approach: check for each triangle for each pixel
 	for(int iy=0; iy<m_res_y; iy++)
 	{
+		int line_offset=iy*m_res_x;
+		int offset=line_offset;
 		for(int ix=0; ix<m_res_x; ix++)
 		{
-			int offset=ix+iy*m_res_x;
+			offset++;
 			glm::vec3& d=m_pixel_direction[offset]; //current pixels direction
 			glm::vec3 intersection_point;			
 			color color;
@@ -15,15 +27,18 @@ void dc::renderer::render()
 			float current_depth=0;
 
 			//check all the triangles for intersections
-			for(int i=0; i<triangles.size(); i++)
+			for(int i=0; i<num_tris; i++)
 			{
-				if(intersect(triangles[i], d, intersection_point, color, depth))
+				if(intersect(triangles.data()[i], d, intersection_point, color, depth))
 				{
 					if(current_depth==0) //if depth value hasn't been set, set it
 					{
 						current_depth=depth;
 					}
-					m_render_surface[offset]=color;
+					if(current_depth<=depth)
+					{
+						m_render_surface[offset]=color;
+					}
 				}
 			}
 
@@ -94,63 +109,67 @@ dc::renderer::~renderer()
 
 bool dc::renderer::intersect(
 	tri& tri,
-	glm::vec3& pixel_diretion,
+	glm::vec3& pixel_direction,
 	glm::vec3& intersection_point,
 	color& color,
 	float& depth)
 {
-	//calculate normal
-	glm::vec3 n=glm::cross(glm::vec3(tri.v[1]-tri.v[0]),glm::vec3(tri.v[2]-tri.v[0]));
-	n=glm::normalize(n);
-
-	glm::vec3& d=pixel_diretion;
-
 	//if ray is parallel to the triangle then return false
-	float nd=glm::dot(n,d);
+	float nd=glm::dot(tri.normal,pixel_direction);
 	if(nd==0)
 	{
 		return false;
 	}
 
-	float e=glm::dot(n,tri.v[0]); //e equals normal dot vetex A
+	float e=glm::dot(tri.normal,tri.v[0]); //e equals normal dot vetex A
 	depth=e/nd;
-	intersection_point=depth*pixel_diretion;
+	intersection_point=depth*pixel_direction;
 
 	//checking if intersection point is inside the triangle
 	float a=glm::dot
 		(
 			glm::cross
 			(
-				glm::vec3(tri.v[1]-tri.v[0]),
-				glm::vec3(intersection_point-tri.v[0])
+				(tri.v[1]-tri.v[0]),
+				(intersection_point-tri.v[0])
 			),
-			n
+			tri.normal
 		);
+	if(a<0)
+	{
+		return false;
+	}
 	float b=glm::dot
 		(
 			glm::cross
 			(
-				glm::vec3(tri.v[2]-tri.v[1]),
-				glm::vec3(intersection_point-tri.v[1])
+				(tri.v[2]-tri.v[1]),
+				(intersection_point-tri.v[1])
 			),
-			n
+			tri.normal
 		);
+	if(b<0)
+	{
+		return false;
+	}
 	float c=glm::dot
 		(
 			glm::cross
 			(
-				glm::vec3(tri.v[0]-tri.v[2]),
-				glm::vec3(intersection_point-tri.v[2])
+				(tri.v[0]-tri.v[2]),
+				(intersection_point-tri.v[2])
 			),
-			n
+			tri.normal
 		);
-	if(a>=0 && b>=0 && c>=0) //intersection
+	if(c<0)
 	{
-		color.r=0.9;
-		color.g=0.7;
-		color.b=0.02;
-		color.a=1;
-		return true;
+		return false;
 	}
-	return false;
+
+	//intersection
+	color.r=0.9;
+	color.g=0.7;
+	color.b=0.02;
+	color.a=1;
+	return true;
 }
