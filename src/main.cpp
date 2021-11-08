@@ -1,11 +1,11 @@
-#include <TGJGE.h>
+#include <dc.hpp>
 
 int main()
 {
-	TG_init("Discord Challenge 2 Software Raytracer", 1366, 768, false, 0);
+	dc::renderer renderer(192,108);
 
-	TG_new_frame(0,0,0);
-	SDL_Delay(2000);
-
-	TG_quit();
+	while(!TG_is_key_pressed(SDL_SCANCODE_ESCAPE))
+	{
+		renderer.render();
+	}
 }
