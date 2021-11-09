@@ -4,31 +4,55 @@ void dc::renderer::render()
 {
 	//prepare the triangles
 	int num_tris=triangles.size();
+	render_tris.clear();
+
 	for(int i=0; i<num_tris; i++)
 	{
 		triangles.data()[i].normal=glm::cross(
 			glm::vec3(triangles.data()[i].v[1]-triangles.data()[i].v[0]),
 			glm::vec3(triangles.data()[i].v[2]-triangles.data()[i].v[0]));
 		triangles.data()[i].normal=glm::normalize(triangles.data()[i].normal);
+
+		if(	triangles.data()[i].v[0].z>1 ||
+			triangles.data()[i].v[1].z>1 || 
+			triangles.data()[i].v[2].z>1)
+		{
+			render_tris.emplace_back(triangles.data()[i]);
+		}
 	}
 
 	//naive approach: check for each triangle for each pixel
+	num_tris=render_tris.size();
 	for(int iy=0; iy<m_res_y; iy++)
 	{
 		int line_offset=iy*m_res_x;
 		int offset=line_offset;
 		for(int ix=0; ix<m_res_x; ix++)
 		{
+			m_render_surface[offset]={0.0,0.0,0.0,1.0};
+
 			glm::vec3& d=m_pixel_direction[offset]; //current pixels direction
 			glm::vec3 intersection_point;			
-			color color;
+			color color={0.0,0.0,0.0,1.0};
 			float depth;
 			float current_depth=0;
+			glm::vec2 bary;
+			glm::vec3 origin=glm::vec3(0,0,0);
+			bool no_ray=false;
 
 			//check all the triangles for intersections
 			for(int i=0; i<num_tris; i++)
 			{
-				if(intersect(triangles.data()[i], d, intersection_point, color, depth))
+
+				if(glm::intersectRayTriangle(
+					origin,
+					d,
+					render_tris.data()[i].v[0],
+					render_tris.data()[i].v[1],
+					render_tris.data()[i].v[2],
+					bary,
+					depth))
+				//if(intersect(triangles.data()[i], d, intersection_point, color, depth))
 				{
 					if(current_depth==0) //if depth value hasn't been set, set it
 					{
@@ -36,10 +60,19 @@ void dc::renderer::render()
 					}
 					if(current_depth<=depth)
 					{
-						m_render_surface[offset]=color;
+						//calculating texture coords
+						glm::vec2 tex_coords=(render_tris.data()[i].st[0]); //equalds v1
+						tex_coords=
+							tex_coords
+							+bary.x
+							*(render_tris.data()[i].st[1] - render_tris.data()[i].st[0])
+							+bary.y
+							*(render_tris.data()[i].st[2] - render_tris.data()[i].st[0]);
+						color=render_tris.data()[i].texture->data[(int)(tex_coords.x*32 + tex_coords.y*32*32)];
 					}
 				}
 			}
+			m_render_surface[offset]=color;
 			offset++; //calculating the next ray in the next loop run
 		}
 	}
@@ -87,15 +120,37 @@ dc::renderer::renderer(int renderer_res_x, int renderer_res_y)
 	tri.v[0].x=-0.5;
 	tri.v[0].y=-0.5;
 	tri.v[0].z=1.5;
+	tri.st[0].x=0.0;
+	tri.st[0].y=0.0;
 
 	tri.v[1].x=0.5;
 	tri.v[1].y=-0.5;
 	tri.v[1].z=1.5;
+	tri.st[1].x=1.0;
+	tri.st[1].y=0.0;
 
 	tri.v[2].x=0;
 	tri.v[2].y=0.5;
 	tri.v[2].z=1.5;
+	tri.st[2].x=0.5;
+	tri.st[2].y=0.5;
+
+	tri.texture=load_texture("assets/smile.png");
 	triangles.emplace_back(tri);
+
+	tri.v[0].x=-2.0;
+	tri.v[0].y=-1.0;
+	tri.v[0].z=3.5;
+
+	tri.v[1].x=1.0;
+	tri.v[1].y=-0.5;
+	tri.v[1].z=1.1;
+
+	tri.v[2].x=0.8;
+	tri.v[2].y=0.5;
+	tri.v[2].z=1.1;
+
+	//triangles.emplace_back(tri);
 	
 }
 
@@ -165,6 +220,7 @@ bool dc::renderer::intersect(
 	{
 		return false;
 	}
+
 
 	//intersection
 	color.r=0.9;

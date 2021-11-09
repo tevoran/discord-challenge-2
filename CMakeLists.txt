@@ -5,8 +5,8 @@ project("dc2")
 #SET(CMAKE_CXX_FLAGS  "-m64 -Ofast -flto -march=native -funroll-loops")
 
 #DEBUGMODE
-SET(CMAKE_CXX_FLAGS "-g -ggdb -fsanitize=address")
-#SET(CMAKE_CXX_FLAGS "-g")
+#SET(CMAKE_CXX_FLAGS "-Wall -g -ggdb -fsanitize=address")
+SET(CMAKE_CXX_FLAGS "-g")
 
 #PROFILERMODE
 #SET(CMAKE_CXX_FLAGS "-g -pg")
@@ -36,10 +36,10 @@ target_link_libraries(tgjge LINK_PRIVATE m)
 target_link_libraries(tgjge LINK_PRIVATE "${GLEW}")
 target_link_libraries(tgjge LINK_PRIVATE "${GL}")
 
-#creating library test
+#creating discord challenge raytracer
 include_directories(src/)
 file(GLOB_RECURSE "dc2" SRC src/*.cpp)
 add_executable(dc2 ${dc2})
 target_link_libraries(dc2 LINK_PRIVATE tgjge)
 file(COPY vendor/TGJGE/shaders DESTINATION .)
-file(COPY vendor/TGJGE/assets DESTINATION .)
+file(COPY assets DESTINATION .)
