@@ -19,7 +19,6 @@ void dc::renderer::render()
 		int offset=line_offset;
 		for(int ix=0; ix<m_res_x; ix++)
 		{
-			offset++;
 			glm::vec3& d=m_pixel_direction[offset]; //current pixels direction
 			glm::vec3 intersection_point;			
 			color color;
@@ -41,7 +40,7 @@ void dc::renderer::render()
 					}
 				}
 			}
-
+			offset++; //calculating the next ray in the next loop run
 		}
 	}
 
@@ -63,7 +62,7 @@ void dc::renderer::render()
 
 dc::renderer::renderer(int renderer_res_x, int renderer_res_y)
 {
-	TG_init("Discord Challenge 2 Software Raytracer", 1920, 1080, true, 0);
+	TG_init("Discord Challenge 2 Software Raytracer", 1920, 1080, false, 0);
 	m_render_object=TG_new_object(1.0, 1.0, 0.0, 0.0);
 	m_res_x=renderer_res_x;
 	m_res_y=renderer_res_y;
@@ -76,9 +75,10 @@ dc::renderer::renderer(int renderer_res_x, int renderer_res_y)
 		for(int ix=0; ix<m_res_x; ix++)
 		{
 			int offset=ix+iy*m_res_x;
-			m_pixel_direction[offset].z=1.0; //always same distance from player
-			m_pixel_direction[offset].x=((float)ix/m_res_x)-0.5;
-			m_pixel_direction[offset].y=((float)iy/m_res_y)-0.5;
+			m_pixel_direction[offset]=glm::vec3(
+				((float)ix/m_res_x)-0.5,
+				((float)iy/m_res_y)-0.5,
+				1.0);
 		}
 	}
 

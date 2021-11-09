@@ -2,7 +2,7 @@
 
 int main()
 {
-	dc::renderer renderer(1920,1080);
+	dc::renderer renderer(192,108);
 
 	while(!TG_is_key_pressed(SDL_SCANCODE_ESCAPE))
 	{
